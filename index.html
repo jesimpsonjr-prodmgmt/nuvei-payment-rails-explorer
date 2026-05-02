@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuvei US Payment Rails Explorer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #111827;
+  --bg-card: #1a2234;
+  --bg-card-hover: #1f2a40;
+  --border: #2a3550;
+  --border-active: #4f8aff;
+  --text-primary: #e8ecf4;
+  --text-secondary: #8899b4;
+  --text-muted: #5a6a84;
+  --accent-blue: #4f8aff;
+  --accent-green: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-red: #f87171;
+  --accent-purple: #a78bfa;
+  --accent-cyan: #22d3ee;
+  --gaming: #f97316;
+  --prediction: #8b5cf6;
+  --crypto: #06b6d4;
+  --ach-color: #60a5fa;
+  --rtp-color: #34d399;
+  --fednow-color: #fbbf24;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 30px rgba(79,138,255,0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ============ HEADER ============ */
+header {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.header-brand h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.header-brand span {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.header-nav {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+
+.nav-btn {
+  padding: 8px 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.nav-btn:hover { color: var(--text-primary); background: var(--bg-card-hover); }
+.nav-btn.active { background: var(--accent-blue); color: #fff; }
+
+.back-link {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: var(--transition);
+}
+.back-link:hover { color: var(--accent-blue); }
+
+/* ============ MAIN ============ */
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-header {
+  margin-bottom: 28px;
+}
+
+.section-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.section-header p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  max-width: 720px;
+}
+
+/* ============ INSIGHT BOX ============ */
+.pm-insight {
+  background: linear-gradient(135deg, rgba(79,138,255,0.08), rgba(167,139,250,0.06));
+  border: 1px solid rgba(79,138,255,0.2);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin: 20px 0;
+  position: relative;
+}
+
+.pm-insight::before {
+  content: 'PM PERSPECTIVE';
+  position: absolute;
+  top: -9px;
+  left: 16px;
+  background: var(--bg-primary);
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: var(--accent-blue);
+}
+
+.pm-insight p {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.product-insight {
+  background: linear-gradient(135deg, rgba(52,211,153,0.08), rgba(34,211,238,0.06));
+  border: 1px solid rgba(52,211,153,0.2);
+}
+
+.product-insight::before {
+  content: 'PRODUCT INSIGHT';
+  color: var(--accent-green);
+}
+
+/* ============ CARDS & GRID ============ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: var(--transition);
+}
+
+.card:hover {
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-glow);
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+/* ============ SELECTOR SECTION ============ */
+.selector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.selector-group h3 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.selector-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selector-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.selector-option:hover { border-color: var(--text-muted); }
+.selector-option.selected { border-color: var(--accent-blue); background: rgba(79,138,255,0.08); }
+
+.selector-option .icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.selector-option .label { font-weight: 500; }
+.selector-option .sublabel { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ============ RECOMMENDATION PANEL ============ */
+.recommendation-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-top: 24px;
+}
+
+.recommendation-panel h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.recommendation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.badge-recommended { background: rgba(52,211,153,0.15); color: var(--accent-green); }
+.badge-alternative { background: rgba(251,191,36,0.15); color: var(--accent-amber); }
+.badge-not-ideal { background: rgba(248,113,113,0.15); color: var(--accent-red); }
+
+/* ============ COMPARISON TABLE ============ */
+.comparison-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 20px 0;
+  font-size: 13.5px;
+}
+
+.comparison-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: rgba(79,138,255,0.06);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(42,53,80,0.5);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+.comparison-table tr:last-child td { border-bottom: none; }
+
+.comparison-table .rail-header {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.comparison-table .highlight-cell {
+  color: var(--accent-green);
+  font-weight: 500;
+}
+
+.comparison-table .warning-cell {
+  color: var(--accent-amber);
+  font-weight: 500;
+}
+
+.comparison-table .danger-cell {
+  color: var(--accent-red);
+  font-weight: 500;
+}
+
+.rail-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.rail-dot.ach { background: var(--ach-color); }
+.rail-dot.rtp { background: var(--rtp-color); }
+.rail-dot.fednow { background: var(--fednow-color); }
+
+/* ============ LIFECYCLE SECTION ============ */
+.lifecycle-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.rail-select-btn {
+  padding: 10px 24px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rail-select-btn:hover { border-color: var(--text-muted); }
+.rail-select-btn.active-ach { border-color: var(--ach-color); color: var(--ach-color); background: rgba(96,165,250,0.08); }
+.rail-select-btn.active-rtp { border-color: var(--rtp-color); color: var(--rtp-color); background: rgba(52,211,153,0.08); }
+.rail-select-btn.active-fednow { border-color: var(--fednow-color); color: var(--fednow-color); background: rgba(251,191,36,0.08); }
+
+.lifecycle-viz {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lifecycle-stages {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  padding: 20px 0;
+}
+
+.lifecycle-connector {
+  position: absolute;
+  top: 52px;
+  left: 60px;
+  right: 60px;
+  height: 3px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.lifecycle-connector-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.lifecycle-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  flex: 1;
+  max-width: 160px;
+}
+
+.stage-node {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 12px;
+  transition: var(--transition);
+  position: relative;
+}
+
+.stage-node.completed {
+  border-color: var(--accent-green);
+  background: rgba(52,211,153,0.15);
+}
+
+.stage-node.active {
+  border-color: var(--accent-blue);
+  background: rgba(79,138,255,0.15);
+  animation: pulse 1.5s infinite;
+}
+
+.stage-node.failed {
+  border-color: var(--accent-red);
+  background: rgba(248,113,113,0.15);
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79,138,255,0.3); }
+  50% { box-shadow: 0 0 0 10px rgba(79,138,255,0); }
+}
+
+.stage-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.stage-timing {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.stage-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 4px;
+  max-width: 130px;
+}
+
+.lifecycle-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 10px 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.action-btn.primary {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.action-btn.primary:hover { background: #3a73e8; }
+
+.action-btn.secondary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.action-btn.secondary:hover { border-color: var(--text-muted); }
+
+.action-btn.danger {
+  background: rgba(248,113,113,0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(248,113,113,0.3);
+}
+
+.scenario-panel {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.scenario-panel h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.scenario-panel p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.status-log {
+  margin-top: 16px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+}
+
+.log-entry {
+  padding: 3px 0;
+  color: var(--text-muted);
+  display: flex;
+  gap: 10px;
+}
+
+.log-entry .log-time { color: var(--text-muted); min-width: 80px; }
+.log-entry .log-msg { color: var(--text-secondary); }
+.log-entry.success .log-msg { color: var(--accent-green); }
+.log-entry.error .log-msg { color: var(--accent-red); }
+.log-entry.info .log-msg { color: var(--accent-blue); }
+
+/* ============ KPI DASHBOARD ============ */
+.kpi-topline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.kpi-card .kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.kpi-card .kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.kpi-card .kpi-change {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.kpi-change.positive { color: var(--accent-green); }
+.kpi-change.negative { color: var(--accent-red); }
+
+.chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.chart-container h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 280px;
+}
+
+/* ============ FOOTER ============ */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+footer p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+footer a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+footer a:hover { text-decoration: underline; }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 900px) {
+  .selector-grid { grid-template-columns: 1fr; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .kpi-topline { grid-template-columns: 1fr 1fr; }
+  .lifecycle-stages { flex-direction: column; align-items: center; gap: 16px; }
+  .lifecycle-connector { display: none; }
+  .header-nav { order: 3; width: 100%; justify-content: center; }
+}
+
+@media (max-width: 600px) {
+  .header-brand h1 { font-size: 15px; }
+  .nav-btn { font-size: 11px; padding: 6px 12px; }
+  .kpi-topline { grid-template-columns: 1fr; }
+  .section-header h2 { font-size: 22px; }
+  .comparison-table { font-size: 12px; }
+  .comparison-table th, .comparison-table td { padding: 8px 10px; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="brand-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7h18M3 12h18M3 17h18" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="7" cy="7" r="2" fill="#fff"/><circle cx="14" cy="12" r="2" fill="#fff"/><circle cx="10" cy="17" r="2" fill="#fff"/></svg></div>
+      <div>
+        <h1>US Payment Rails Explorer</h1>
+        <span>ACH &middot; RTP &middot; FedNow | Interactive Product Demo</span>
+      </div>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn active" onclick="showSection('selector')">Rail Selector</button>
+      <button class="nav-btn" onclick="showSection('lifecycle')">Lifecycle</button>
+      <button class="nav-btn" onclick="showSection('dashboard')">KPI Dashboard</button>
+    </nav>
+    <a href="https://johnsimpson.io" class="back-link">&larr; johnsimpson.io</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ===================== SECTION 1: RAIL SELECTOR ===================== -->
+<div id="section-selector" class="section active">
+  <div class="section-header">
+    <h2>Payment Rail Selector</h2>
+    <p>Choose a vertical and transaction type to see which US bank-based payment rail best fits the use case, with a detailed comparison of trade-offs.</p>
+  </div>
+
+  <div class="selector-grid">
+    <div class="selector-group">
+      <h3>Merchant Vertical</h3>
+      <div class="selector-options" id="vertical-options">
+        <div class="selector-option selected" data-value="gaming" onclick="selectOption('vertical', this)">
+          <div class="icon" style="background:rgba(249,115,22,0.15);color:var(--gaming);">&#x1F3B0;</div>
+          <div><div class="label">Gaming / iGaming</div><div class="sublabel">Sports betting, online casino, fantasy sports</div></div>
+        </div>
+        <div class="selector-option" data-value="prediction" onclick="selectOption('vertical', this)">
+          <div class="icon" style="background:rgba(139,92,246,0.15);color:var(--prediction);">&#x1F4C8;</div>
+          <div><div class="label">Prediction Markets</div><div class="sublabel">Event contracts, binary options, forecasting</div></div>
+        </div>
+        <div class="selector-option" data-value="crypto" onclick="selectOption('vertical', this)">
+          <div class="icon" style="background:rgba(6,182,212,0.15);color:var(--crypto);">&#x26D3;</div>
+          <div><div class="label">Crypto / Digital Assets</div><div class="sublabel">Exchanges, wallets, fiat on/off ramp</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="selector-group">
+      <h3>Transaction Type</h3>
+      <div class="selector-options" id="txtype-options">
+        <div class="selector-option selected" data-value="deposit" onclick="selectOption('txtype', this)">
+          <div class="icon" style="background:rgba(52,211,153,0.15);color:var(--accent-green);">&#x2B07;</div>
+          <div><div class="label">Deposit / Pay-in</div><div class="sublabel">User funds their account from a bank</div></div>
+        </div>
+        <div class="selector-option" data-value="withdrawal" onclick="selectOption('txtype', this)">
+          <div class="icon" style="background:rgba(96,165,250,0.15);color:var(--ach-color);">&#x2B06;</div>
+          <div><div class="label">Withdrawal / Payout</div><div class="sublabel">Platform disburses funds to user's bank</div></div>
+        </div>
+        <div class="selector-option" data-value="recurring" onclick="selectOption('txtype', this)">
+          <div class="icon" style="background:rgba(167,139,250,0.15);color:var(--accent-purple);">&#x1F504;</div>
+          <div><div class="label">Recurring / Subscription</div><div class="sublabel">Automated periodic funding</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="recommendation-output"></div>
+</div>
+
+<!-- ===================== SECTION 2: LIFECYCLE ===================== -->
+<div id="section-lifecycle" class="section">
+  <div class="section-header">
+    <h2>Transaction Lifecycle Simulator</h2>
+    <p>Watch how a payment moves through each rail from initiation to settlement. Select a rail, run the animation, or trigger a failure scenario to see how error handling differs.</p>
+  </div>
+
+  <div class="lifecycle-controls">
+    <button class="rail-select-btn active-ach" data-rail="ach" onclick="selectRail(this)">
+      <span class="rail-dot ach"></span> ACH
+    </button>
+    <button class="rail-select-btn" data-rail="rtp" onclick="selectRail(this)">
+      <span class="rail-dot rtp"></span> RTP
+    </button>
+    <button class="rail-select-btn" data-rail="fednow" onclick="selectRail(this)">
+      <span class="rail-dot fednow"></span> FedNow
+    </button>
+  </div>
+
+  <div class="lifecycle-viz">
+    <div class="lifecycle-stages" id="lifecycle-stages"></div>
+    <div class="lifecycle-actions">
+      <button class="action-btn primary" id="btn-run" onclick="runLifecycle()">&#9654; Run Transaction</button>
+      <button class="action-btn secondary" onclick="resetLifecycle()">&#8635; Reset</button>
+      <button class="action-btn danger" onclick="runFailure()">&#x26A0; Simulate Failure</button>
+    </div>
+    <div class="status-log" id="status-log"></div>
+  </div>
+
+  <div id="lifecycle-insight"></div>
+</div>
+
+<!-- ===================== SECTION 3: KPI DASHBOARD ===================== -->
+<div id="section-dashboard" class="section">
+  <div class="section-header">
+    <h2>Merchant KPI Dashboard</h2>
+    <p>Simulated analytics showing the metrics a PM owning bank-based payment products would monitor daily. Data reflects realistic distributions modeled on industry benchmarks.</p>
+  </div>
+
+  <div class="kpi-topline">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Volume (30d)</div>
+      <div class="kpi-value" style="color:var(--accent-blue);">$14.2M</div>
+      <div class="kpi-change positive">&#9650; 12.4% vs prior period</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Approval Rate</div>
+      <div class="kpi-value" style="color:var(--accent-green);">94.7%</div>
+      <div class="kpi-change positive">&#9650; 1.2pp vs prior period</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Settlement Time</div>
+      <div class="kpi-value" style="color:var(--accent-amber);">4.2h</div>
+      <div class="kpi-change positive">&#9660; 18% faster (blended)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Return Rate</div>
+      <div class="kpi-value" style="color:var(--accent-red);">2.1%</div>
+      <div class="kpi-change negative">&#9650; 0.3pp vs prior period</div>
+    </div>
+  </div>
+
+  <div class="pm-insight">
+    <p>These four KPIs map directly to the role's requirement to "monitor product KPIs and metrics." Volume tracks growth. Approval rate measures conversion health. Settlement time reflects the rail mix (more real-time = lower blended average). Return rate is the risk signal. A rising return rate on ACH may indicate the need to shift deposit volume toward irrevocable rails like RTP/FedNow, or to implement Nuvei's Assured Funds product for risk mitigation.</p>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="chart-container">
+      <h3>Transaction Volume by Rail (30 days)</h3>
+      <div class="chart-wrap"><canvas id="chart-volume"></canvas></div>
+    </div>
+    <div class="chart-container">
+      <h3>Approval Rate by Rail</h3>
+      <div class="chart-wrap"><canvas id="chart-approval"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="chart-container">
+      <h3>Volume by Vertical</h3>
+      <div class="chart-wrap"><canvas id="chart-vertical"></canvas></div>
+    </div>
+    <div class="chart-container">
+      <h3>Return / Failure Rate Trend</h3>
+      <div class="chart-wrap"><canvas id="chart-returns"></canvas></div>
+    </div>
+  </div>
+
+  <div class="product-insight">
+    <p>In a production environment, this dashboard would pull from Nuvei's Merchant Dashboard API and reconciliation tools. The PM decision here is which metrics to surface and at what granularity. Approval rate by rail reveals whether a specific payment method has integration issues. Return rate by vertical exposes risk. Gaming deposits have higher return rates than crypto due to player dispute patterns. These are the signals that drive prioritization of engineering work and inform merchant advisory conversations.</p>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <p><strong>Built by John Simpson</strong> | Senior Product Manager | 20 years in enterprise fintech &amp; payments</p>
+  <p>Code is AI-assisted. Product thinking, domain expertise, and strategic commentary are mine.</p>
+  <p style="margin-top:8px;"><a href="https://johnsimpson.io">&larr; Back to Portfolio</a></p>
+</footer>
+
+<script>
+// ============ DATA ============
+const railData = {
+  ach: {
+    name: 'ACH',
+    operator: 'Nacha (FedACH + EPN)',
+    launched: '1970s (Same-Day: 2016)',
+    settlement: '1-3 business days (Same-Day: hours)',
+    availability: 'Business days, batch windows',
+    limit: '$1M Same-Day (standard: no cap)',
+    reversibility: 'Reversible (returns up to 60 days)',
+    direction: 'Credit and Debit',
+    costPerTxn: '$0.20 - $0.50',
+    fiCount: '10,000+',
+    color: '#60a5fa',
+    stages: [
+      { label: 'Initiation', icon: '&#x1F4E4;', timing: 'T+0', detail: 'ODFI receives payment file from originator' },
+      { label: 'Batching', icon: '&#x1F4E6;', timing: 'T+0 to T+1', detail: 'Transactions batched by ODFI for submission' },
+      { label: 'Clearing', icon: '&#x2699;', timing: 'T+1', detail: 'ACH operator (FedACH/EPN) sorts and routes entries' },
+      { label: 'Settlement', icon: '&#x1F3E6;', timing: 'T+1 to T+2', detail: 'RDFI posts to receiver account, funds available' },
+      { label: 'Complete', icon: '&#x2705;', timing: 'T+1 to T+3', detail: 'Transaction final (but returns possible up to 60 days)' }
+    ],
+    failureScenario: {
+      title: 'ACH Return: R01 Insufficient Funds',
+      description: 'The RDFI returns the entry because the receiver\'s account has insufficient funds. Unlike real-time rails, ACH returns can arrive 2+ business days after settlement, creating a float risk window. The originator (merchant) must absorb this loss or use Nuvei\'s Assured Funds product to insure against it.',
+      failStage: 3
+    }
+  },
+  rtp: {
+    name: 'RTP',
+    operator: 'The Clearing House',
+    launched: '2017',
+    settlement: 'Real-time (seconds)',
+    availability: '24/7/365',
+    limit: '$10M (network max)',
+    reversibility: 'Irrevocable',
+    direction: 'Credit only',
+    costPerTxn: '$0.50 - $1.00',
+    fiCount: '675+',
+    color: '#34d399',
+    stages: [
+      { label: 'Initiation', icon: '&#x1F4E4;', timing: '0s', detail: 'Sender FI submits payment message (ISO 20022)' },
+      { label: 'Validation', icon: '&#x1F50D;', timing: '<1s', detail: 'TCH validates message, checks liquidity in prefunded account' },
+      { label: 'Clearing', icon: '&#x26A1;', timing: '1-2s', detail: 'TCH clears payment, debits sender FI joint account' },
+      { label: 'Settlement', icon: '&#x1F3E6;', timing: '2-5s', detail: 'Receiver FI credits recipient, confirms settlement' },
+      { label: 'Complete', icon: '&#x2705;', timing: '<15s', detail: 'Irrevocable. Sender and receiver receive instant confirmation' }
+    ],
+    failureScenario: {
+      title: 'RTP Rejection: Receiver FI Timeout',
+      description: 'The receiver\'s financial institution fails to respond within the network timeout window. Unlike ACH, there is no delayed return. The transaction is rejected immediately and the sender is notified in real-time. The product team must build retry logic and a clear UX for "try again" scenarios. Funds never left the sender\'s account.',
+      failStage: 2
+    }
+  },
+  fednow: {
+    name: 'FedNow',
+    operator: 'Federal Reserve',
+    launched: 'July 2023',
+    settlement: 'Real-time (seconds)',
+    availability: '24/7/365',
+    limit: '$10M (as of Sept 2025)',
+    reversibility: 'Irrevocable',
+    direction: 'Credit only',
+    costPerTxn: '$0.01 - $0.045',
+    fiCount: '1,200+',
+    color: '#fbbf24',
+    stages: [
+      { label: 'Initiation', icon: '&#x1F4E4;', timing: '0s', detail: 'Sender FI submits ISO 20022 message to Fed' },
+      { label: 'Validation', icon: '&#x1F50D;', timing: '<1s', detail: 'Fed validates against sender FI\'s master account balance' },
+      { label: 'Clearing', icon: '&#x26A1;', timing: '1-3s', detail: 'Fed debits sender FI master account, credits receiver FI' },
+      { label: 'Settlement', icon: '&#x1F3E6;', timing: '3-7s', detail: 'Receiver FI posts funds to recipient account' },
+      { label: 'Complete', icon: '&#x2705;', timing: '<20s', detail: 'Irrevocable. Both FIs settled via Federal Reserve master accounts' }
+    ],
+    failureScenario: {
+      title: 'FedNow Rejection: Account Not Enabled',
+      description: 'The receiver\'s financial institution is not yet a FedNow participant (1,200+ FIs enrolled, but not universal). The payment is rejected immediately with an error code. The product team must implement fallback routing: if FedNow fails, automatically attempt RTP, then fall back to ACH. This "waterfall" routing is a key product feature for payment orchestration platforms like Nuvei.',
+      failStage: 1
+    }
+  }
+};
+
+const recommendations = {
+  gaming: {
+    deposit: {
+      primary: 'rtp',
+      secondary: 'fednow',
+      tertiary: 'ach',
+      rationale: 'Gaming deposits are the most time-sensitive transaction type. Players who click "deposit" expect instant fund availability so they can place bets or join games immediately. Every second of delay increases drop-off risk. RTP\'s irrevocable, real-time settlement means the gaming platform can credit the player\'s wallet within seconds with zero chargeback risk. FedNow is a strong alternative with broader FI coverage at lower cost, though slightly fewer participating institutions among major banks. ACH is a poor fit for deposits. The 1-3 day settlement creates an unacceptable user experience, and its reversibility exposes the platform to deposit-then-dispute fraud.'
+    },
+    withdrawal: {
+      primary: 'ach',
+      secondary: 'rtp',
+      tertiary: 'fednow',
+      rationale: 'Withdrawals are less time-sensitive than deposits. Players tolerate waiting 1-3 days for payouts. ACH\'s lower cost ($0.20-$0.50 vs $0.50-$1.00 for RTP) makes it the economical default. However, offering RTP or FedNow as a "fast payout" option (potentially at a small fee to the player) creates a premium experience that drives player loyalty and differentiation. Nuvei was first to market with real-time deposits for US iGaming. Extending that to instant withdrawals is a natural product evolution.'
+    },
+    recurring: {
+      primary: 'ach',
+      secondary: 'rtp',
+      tertiary: 'fednow',
+      rationale: 'Recurring deposits for gaming (e.g., weekly auto-fund of $100) are best served by ACH debit. The player has pre-authorized the transaction, timing is predictable, and the lower cost per transaction matters at scale. ACH\'s debit capability is the differentiator here. RTP and FedNow are credit-only, meaning the player would need to initiate each funding event themselves.'
+    }
+  },
+  prediction: {
+    deposit: {
+      primary: 'rtp',
+      secondary: 'fednow',
+      tertiary: 'ach',
+      rationale: 'Prediction markets are event-driven. A user sees a news event and wants to take a position immediately. If funding takes hours, the market opportunity has passed. RTP delivers instant, irrevocable settlement that lets the platform credit the user\'s trading account within seconds. This is especially critical for markets that resolve quickly (e.g., "Will the Fed raise rates today?"). FedNow provides similar speed at lower cost. ACH creates an unacceptable lag between intent and ability to trade.'
+    },
+    withdrawal: {
+      primary: 'rtp',
+      secondary: 'fednow',
+      tertiary: 'ach',
+      rationale: 'When a prediction market resolves, users expect their winnings quickly. Real-time payouts via RTP reinforce trust in the platform. Unlike gaming, prediction market users are more likely to withdraw immediately after an event resolves, making payout speed a competitive differentiator. The irrevocable nature of RTP also protects the platform. Once the market has resolved and funds are paid, there\'s no reversal risk.'
+    },
+    recurring: {
+      primary: 'ach',
+      secondary: 'rtp',
+      tertiary: 'fednow',
+      rationale: 'Recurring funding for prediction markets (e.g., auto-fund $50/week for regular trading) follows the same logic as gaming: ACH debit is the most cost-effective option for scheduled, predictable transactions. The user has pre-authorized the debit, the timing is controlled by the platform, and the lower per-transaction cost matters for high-frequency, lower-value recurring deposits.'
+    }
+  },
+  crypto: {
+    deposit: {
+      primary: 'fednow',
+      secondary: 'rtp',
+      tertiary: 'ach',
+      rationale: 'Crypto deposits have a unique constraint: the user is trying to buy an asset whose price changes by the second. ACH\'s 1-3 day settlement creates "price slippage risk." The price the user expected when they initiated the deposit may be very different when funds arrive. FedNow is the top recommendation here due to its combination of real-time settlement, broader FI coverage (1,200+ vs 675+), and significantly lower per-transaction cost ($0.01-$0.045 vs $0.50-$1.00). In the high-volume, lower-margin crypto exchange business, transaction costs directly impact profitability.'
+    },
+    withdrawal: {
+      primary: 'fednow',
+      secondary: 'rtp',
+      tertiary: 'ach',
+      rationale: 'Crypto users selling assets and withdrawing to their bank expect speed that matches the crypto experience. FedNow\'s lower cost structure is advantageous here. Crypto exchanges process high volumes of withdrawals, and even $0.50 per transaction savings at scale is significant. The irrevocable nature of both real-time rails also protects the exchange from users who sell crypto, withdraw fiat, then attempt to reverse the bank transfer.'
+    },
+    recurring: {
+      primary: 'ach',
+      secondary: 'fednow',
+      tertiary: 'rtp',
+      rationale: 'Dollar-cost averaging (DCA), where users auto-buy a fixed $ amount of crypto on a schedule, is a growing use case. ACH debit is ideal: the timing is predictable, the user has opted in, and the lower cost per transaction matters when a user is funding $25/week. The slight price slippage from ACH settlement delay is acceptable for DCA because the entire strategy is about averaging out price fluctuations over time.'
+    }
+  }
+};
+
+// ============ NAVIGATION ============
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (id === 'dashboard') initCharts();
+}
+
+// ============ RAIL SELECTOR ============
+let selectedVertical = 'gaming';
+let selectedTxType = 'deposit';
+
+function selectOption(group, el) {
+  const container = el.parentElement;
+  container.querySelectorAll('.selector-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  if (group === 'vertical') selectedVertical = el.dataset.value;
+  if (group === 'txtype') selectedTxType = el.dataset.value;
+  updateRecommendation();
+}
+
+function updateRecommendation() {
+  const rec = recommendations[selectedVertical][selectedTxType];
+  const primary = railData[rec.primary];
+  const secondary = railData[rec.secondary];
+  const tertiary = railData[rec.tertiary];
+
+  const verticalNames = { gaming: 'Gaming / iGaming', prediction: 'Prediction Markets', crypto: 'Crypto / Digital Assets' };
+  const txNames = { deposit: 'Deposit / Pay-in', withdrawal: 'Withdrawal / Payout', recurring: 'Recurring / Subscription' };
+
+  document.getElementById('recommendation-output').innerHTML = `
+    <div class="recommendation-panel">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+        <h3>Recommendation: ${verticalNames[selectedVertical]} | ${txNames[selectedTxType]}</h3>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <div class="recommendation-badge badge-recommended">
+          <span class="rail-dot" style="background:${primary.color}"></span>
+          ${primary.name} | Recommended
+        </div>
+        <div class="recommendation-badge badge-alternative">
+          <span class="rail-dot" style="background:${secondary.color}"></span>
+          ${secondary.name} | Alternative
+        </div>
+        <div class="recommendation-badge badge-not-ideal">
+          <span class="rail-dot" style="background:${tertiary.color}"></span>
+          ${tertiary.name} | Not Ideal
+        </div>
+      </div>
+
+      <div class="pm-insight" style="margin-top:0;margin-bottom:20px;">
+        <p>${rec.rationale}</p>
+      </div>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th><span class="rail-dot" style="background:${primary.color}"></span>${primary.name}</th>
+            <th><span class="rail-dot" style="background:${secondary.color}"></span>${secondary.name}</th>
+            <th><span class="rail-dot" style="background:${tertiary.color}"></span>${tertiary.name}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rail-header">Settlement Speed</td>
+            <td class="${getSpeedClass(primary.name)}">${primary.settlement}</td>
+            <td class="${getSpeedClass(secondary.name)}">${secondary.settlement}</td>
+            <td class="${getSpeedClass(tertiary.name)}">${tertiary.settlement}</td>
+          </tr>
+          <tr>
+            <td class="rail-header">Availability</td>
+            <td>${primary.availability}</td>
+            <td>${secondary.availability}</td>
+            <td>${tertiary.availability}</td>
+          </tr>
+          <tr>
+            <td class="rail-header">Transaction Limit</td>
+            <td>${primary.limit}</td>
+            <td>${secondary.limit}</td>
+            <td>${tertiary.limit}</td>
+          </tr>
+          <tr>
+            <td class="rail-header">Reversibility</td>
+            <td class="${getReversibilityClass(primary.name)}">${primary.reversibility}</td>
+            <td class="${getReversibilityClass(secondary.name)}">${secondary.reversibility}</td>
+            <td class="${getReversibilityClass(tertiary.name)}">${tertiary.reversibility}</td>
+          </tr>
+          <tr>
+            <td class="rail-header">Direction</td>
+            <td>${primary.direction}</td>
+            <td>${secondary.direction}</td>
+            <td>${tertiary.direction}</td>
+          </tr>
+          <tr>
+            <td class="rail-header">Cost / Transaction</td>
+            <td>${primary.costPerTxn}</td>
+            <td>${secondary.costPerTxn}</td>
+            <td>${tertiary.costPerTxn}</td>
+          </tr>
+          <tr>
+            <td class="rail-header">FI Participation</td>
+            <td>${primary.fiCount}</td>
+            <td>${secondary.fiCount}</td>
+            <td>${tertiary.fiCount}</td>
+          </tr>
+          <tr>
+            <td class="rail-header">Operator</td>
+            <td>${primary.operator}</td>
+            <td>${secondary.operator}</td>
+            <td>${tertiary.operator}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function getSpeedClass(rail) {
+  if (rail === 'ACH') return 'danger-cell';
+  return 'highlight-cell';
+}
+
+function getReversibilityClass(rail) {
+  if (rail === 'ACH') return 'warning-cell';
+  return 'highlight-cell';
+}
+
+// Initialize
+updateRecommendation();
+
+// ============ LIFECYCLE ============
+let currentRail = 'ach';
+let lifecycleRunning = false;
+let lifecycleTimeout = null;
+
+function selectRail(btn) {
+  if (lifecycleRunning) return;
+  const rail = btn.dataset.rail;
+  currentRail = rail;
+  document.querySelectorAll('.rail-select-btn').forEach(b => {
+    b.className = 'rail-select-btn';
+  });
+  btn.classList.add('active-' + rail);
+  renderLifecycleStages();
+  updateLifecycleInsight();
+}
+
+function renderLifecycleStages() {
+  const rail = railData[currentRail];
+  const container = document.getElementById('lifecycle-stages');
+  container.innerHTML = `
+    <div class="lifecycle-connector">
+      <div class="lifecycle-connector-fill" id="connector-fill" style="background:${rail.color}"></div>
+    </div>
+    ${rail.stages.map((stage, i) => `
+      <div class="lifecycle-stage" id="stage-${i}">
+        <div class="stage-node" id="node-${i}">${stage.icon}</div>
+        <div class="stage-label">${stage.label}</div>
+        <div class="stage-timing mono">${stage.timing}</div>
+        <div class="stage-detail">${stage.detail}</div>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('status-log').innerHTML = '';
+}
+
+function addLog(time, msg, type) {
+  const log = document.getElementById('status-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry ' + (type || '');
+  entry.innerHTML = `<span class="log-time">${time}</span><span class="log-msg">${msg}</span>`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function runLifecycle() {
+  if (lifecycleRunning) return;
+  lifecycleRunning = true;
+  renderLifecycleStages();
+  document.getElementById('btn-run').disabled = true;
+
+  const rail = railData[currentRail];
+  const stages = rail.stages;
+  const delays = currentRail === 'ach' ? [500, 1200, 1800, 2500, 3200] : [300, 600, 900, 1200, 1500];
+  const timestamps = currentRail === 'ach'
+    ? ['T+0 00:00', 'T+0 14:00', 'T+1 06:00', 'T+1 17:00', 'T+2 09:00']
+    : currentRail === 'rtp'
+    ? ['00:00.000', '00:00.312', '00:01.105', '00:03.447', '00:04.892']
+    : ['00:00.000', '00:00.528', '00:01.834', '00:05.210', '00:07.103'];
+
+  addLog(timestamps[0], `${rail.name} transaction initiated: $250.00 deposit`, 'info');
+
+  stages.forEach((stage, i) => {
+    lifecycleTimeout = setTimeout(() => {
+      if (i > 0) {
+        document.getElementById('node-' + (i - 1)).classList.remove('active');
+        document.getElementById('node-' + (i - 1)).classList.add('completed');
+      }
+      document.getElementById('node-' + i).classList.add('active');
+      const pct = ((i + 1) / stages.length) * 100;
+      document.getElementById('connector-fill').style.width = pct + '%';
+      addLog(timestamps[i], `${stage.label}: ${stage.detail}`, i === stages.length - 1 ? 'success' : 'info');
+
+      if (i === stages.length - 1) {
+        setTimeout(() => {
+          document.getElementById('node-' + i).classList.remove('active');
+          document.getElementById('node-' + i).classList.add('completed');
+          addLog(timestamps[i], `Transaction complete: settlement finalized`, 'success');
+          lifecycleRunning = false;
+          document.getElementById('btn-run').disabled = false;
+        }, 500);
+      }
+    }, delays[i]);
+  });
+}
+
+function runFailure() {
+  if (lifecycleRunning) return;
+  lifecycleRunning = true;
+  renderLifecycleStages();
+  document.getElementById('btn-run').disabled = true;
+
+  const rail = railData[currentRail];
+  const failure = rail.failureScenario;
+  const stages = rail.stages;
+  const delays = currentRail === 'ach' ? [500, 1200, 1800, 2500] : [300, 600, 900, 1200];
+  const timestamps = currentRail === 'ach'
+    ? ['T+0 00:00', 'T+0 14:00', 'T+1 06:00', 'T+3 09:00']
+    : currentRail === 'rtp'
+    ? ['00:00.000', '00:00.312', '00:01.105', '00:01.890']
+    : ['00:00.000', '00:00.528', '00:01.190', '00:01.834'];
+
+  addLog(timestamps[0], `${rail.name} transaction initiated: $250.00 deposit`, 'info');
+
+  for (let i = 0; i <= failure.failStage; i++) {
+    lifecycleTimeout = setTimeout(() => {
+      if (i > 0) {
+        document.getElementById('node-' + (i - 1)).classList.remove('active');
+        document.getElementById('node-' + (i - 1)).classList.add('completed');
+      }
+      const pct = ((i + 1) / stages.length) * 100;
+      document.getElementById('connector-fill').style.width = pct + '%';
+
+      if (i === failure.failStage) {
+        document.getElementById('node-' + i).classList.add('failed');
+        addLog(timestamps[i + 1] || timestamps[i], `FAILURE: ${failure.title}`, 'error');
+
+        const panel = document.createElement('div');
+        panel.className = 'scenario-panel';
+        panel.innerHTML = `<h4>${failure.title}</h4><p>${failure.description}</p>`;
+        document.querySelector('.lifecycle-viz').appendChild(panel);
+
+        lifecycleRunning = false;
+        document.getElementById('btn-run').disabled = false;
+      } else {
+        document.getElementById('node-' + i).classList.add('active');
+        addLog(timestamps[i], `${stages[i].label}: ${stages[i].detail}`, 'info');
+      }
+    }, delays[i]);
+  }
+}
+
+function resetLifecycle() {
+  lifecycleRunning = false;
+  clearTimeout(lifecycleTimeout);
+  document.getElementById('btn-run').disabled = false;
+  renderLifecycleStages();
+  const existingPanel = document.querySelector('.scenario-panel');
+  if (existingPanel) existingPanel.remove();
+}
+
+function updateLifecycleInsight() {
+  const insights = {
+    ach: `<p>ACH's batch-based lifecycle is the key product constraint. Transactions submitted after the day's cutoff wait until the next processing window. For a PM building deposit features, this means designing around uncertainty. The user clicks "deposit" but funds may not be available for 1-3 business days. This drives the need for "pending deposit" UI states, pre-crediting logic (with risk controls), and clear communication about expected availability. ACH's reversibility (returns up to 60 days) also means the PM must design for post-settlement clawbacks. A deposited amount that was already credited to a player's wallet may need to be debited back.</p>`,
+    rtp: `<p>RTP's real-time lifecycle eliminates the "pending" UX problem entirely. The PM can design a deposit flow where the user sees their balance update within seconds, matching the instant gratification users expect from card payments but at lower cost. The key product constraint is RTP's credit-only model: the user (via their bank) must push funds to the platform. This requires an integration pattern where the platform generates a payment request and the user authorizes it through their bank's interface. The PM must work closely with UX to make this flow feel as simple as entering a card number.</p>`,
+    fednow: `<p>FedNow's lifecycle is nearly identical to RTP from the user's perspective, but the PM should understand two key differences: (1) FedNow settles through the Federal Reserve's master accounts rather than a private joint account, which some regulated gaming operators may prefer for compliance reasons, and (2) FedNow's per-transaction cost ($0.01-$0.045) is dramatically lower than RTP ($0.50-$1.00), which directly impacts unit economics for high-volume verticals like crypto exchanges. The PM trade-off is that FedNow has fewer large-bank participants on the Send side, so fallback routing to RTP or ACH is still necessary.</p>`
+  };
+
+  document.getElementById('lifecycle-insight').innerHTML = `
+    <div class="pm-insight" style="margin-top:20px;">
+      ${insights[currentRail]}
+    </div>
+  `;
+}
+
+renderLifecycleStages();
+updateLifecycleInsight();
+
+// ============ KPI DASHBOARD ============
+let chartsInitialized = false;
+
+function initCharts() {
+  if (chartsInitialized) return;
+  chartsInitialized = true;
+
+  const chartFont = { family: "'DM Sans', sans-serif", size: 12, color: '#8899b4' };
+  const gridColor = 'rgba(42,53,80,0.5)';
+
+  Chart.defaults.color = '#8899b4';
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+  // Volume by Rail
+  new Chart(document.getElementById('chart-volume'), {
+    type: 'bar',
+    data: {
+      labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+      datasets: [
+        { label: 'ACH', data: [2100000, 2250000, 2180000, 2320000], backgroundColor: 'rgba(96,165,250,0.7)', borderRadius: 4 },
+        { label: 'RTP', data: [1400000, 1580000, 1650000, 1720000], backgroundColor: 'rgba(52,211,153,0.7)', borderRadius: 4 },
+        { label: 'FedNow', data: [380000, 420000, 510000, 580000], backgroundColor: 'rgba(251,191,36,0.7)', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } },
+      scales: {
+        x: { grid: { display: false }, border: { color: gridColor } },
+        y: { grid: { color: gridColor }, border: { display: false },
+          ticks: { callback: v => '$' + (v / 1000000).toFixed(1) + 'M' }
+        }
+      }
+    }
+  });
+
+  // Approval Rate
+  new Chart(document.getElementById('chart-approval'), {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+      datasets: [
+        { label: 'ACH', data: [92.1, 92.8, 93.2, 93.0, 93.5, 94.1, 94.0, 94.3], borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.1)', tension: 0.3, fill: false, pointRadius: 3 },
+        { label: 'RTP', data: [96.2, 96.5, 96.8, 97.1, 97.0, 97.3, 97.2, 97.5], borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.1)', tension: 0.3, fill: false, pointRadius: 3 },
+        { label: 'FedNow', data: [94.0, 94.8, 95.2, 95.5, 95.8, 96.0, 96.2, 96.5], borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)', tension: 0.3, fill: false, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } },
+      scales: {
+        x: { grid: { display: false }, border: { color: gridColor } },
+        y: { min: 90, max: 100, grid: { color: gridColor }, border: { display: false },
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+
+  // Volume by Vertical
+  new Chart(document.getElementById('chart-vertical'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Gaming / iGaming', 'Prediction Markets', 'Crypto / Digital Assets'],
+      datasets: [{
+        data: [58, 24, 18],
+        backgroundColor: ['rgba(249,115,22,0.8)', 'rgba(139,92,246,0.8)', 'rgba(6,182,212,0.8)'],
+        borderColor: 'transparent',
+        borderWidth: 0,
+        spacing: 3,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } },
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + '% of volume' } }
+      }
+    }
+  });
+
+  // Return Rate Trend
+  new Chart(document.getElementById('chart-returns'), {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+      datasets: [
+        { label: 'ACH Returns', data: [3.2, 3.0, 2.8, 2.9, 3.1, 2.7, 2.5, 2.8], borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+        { label: 'RTP Failures', data: [0.8, 0.7, 0.6, 0.5, 0.6, 0.5, 0.4, 0.4], borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.05)', tension: 0.3, fill: true, pointRadius: 3 },
+        { label: 'FedNow Failures', data: [1.5, 1.3, 1.2, 1.0, 0.9, 0.8, 0.7, 0.6], borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.05)', tension: 0.3, fill: true, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } },
+      scales: {
+        x: { grid: { display: false }, border: { color: gridColor } },
+        y: { min: 0, max: 5, grid: { color: gridColor }, border: { display: false },
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+}
+</script>
+
+</body>
+</html>
