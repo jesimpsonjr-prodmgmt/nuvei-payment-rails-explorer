@@ -9,7 +9,7 @@ An interactive product demo exploring US bank-based payment rails (ACH, RTP, Fed
 
 ## Problem Statement
 
-Nuvei's US bank transfer business spans three payment rails (ACH, RTP, FedNow) and serves high-velocity verticals where settlement speed, reversibility, and transaction limits directly impact product experience and risk exposure. A Product Manager owning these rails needs to understand the trade-offs between them — not just technically, but in the context of specific vertical requirements.
+Nuvei's US bank transfer business spans three payment rails (ACH, RTP, FedNow) and serves high-velocity verticals where settlement speed, reversibility, and transaction limits directly impact product experience and risk exposure. A Product Manager owning these rails needs to understand the trade-offs between them, not just technically, but in the context of specific vertical requirements.
 
 A gaming operator needs instant deposits to keep players engaged. A prediction market platform needs irrevocable settlement before event outcomes are finalized. A crypto exchange needs real-time fund availability to match volatile asset prices. Each vertical imposes different constraints on which rail to recommend, when, and why.
 
